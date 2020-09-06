@@ -6,10 +6,17 @@ import com.huobi.client.model.enums.CandlestickInterval;
 
 public abstract class Channels {
 
-  public static String klineChannel(String symbol, CandlestickInterval interval) {
+  public static String klineChannel(String symbol, CandlestickInterval interval, Integer from, Integer to) {
     JSONObject json = new JSONObject();
-    json.put("sub", "market." + symbol + ".kline." + interval.toString());
+    String sub = "market." + symbol + ".kline." + interval.toString();
+    if (from != null && to != null) {
+      json.put("req", sub);
+    } else {
+      json.put("sub", sub);
+    }
     json.put("id", TimeService.getCurrentTimeStamp() + "");
+    json.put("from", from);
+    json.put("to", to);
     return json.toJSONString();
   }
 

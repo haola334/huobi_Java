@@ -41,8 +41,18 @@ class WebsocketRequestImpl {
   }
 
   WebsocketRequest<CandlestickEvent> subscribeCandlestickEvent(
+          List<String> symbols,
+          CandlestickInterval interval,
+          SubscriptionListener<CandlestickEvent> subscriptionListener,
+          SubscriptionErrorHandler errorHandler) {
+    return subscribeCandlestickEvent(symbols, interval, null, null, subscriptionListener, errorHandler);
+  }
+
+  WebsocketRequest<CandlestickEvent> subscribeCandlestickEvent(
       List<String> symbols,
       CandlestickInterval interval,
+      Integer from,
+      Integer to,
       SubscriptionListener<CandlestickEvent> subscriptionListener,
       SubscriptionErrorHandler errorHandler) {
     InputChecker.checker()
@@ -58,7 +68,7 @@ class WebsocketRequestImpl {
     }
     request.connectionHandler = (connection) ->
         symbols.stream()
-            .map((symbol) -> Channels.klineChannel(symbol, interval))
+            .map((symbol) -> Channels.klineChannel(symbol, interval, from, to))
             .forEach(req -> {
               connection.send(req);
               await(1);

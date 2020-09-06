@@ -23,6 +23,6 @@ public class TestSubscriptionChannels {
   @Test
   public void testklineChannel() {
     assertEquals("{\"sub\":\"market.btcusdt.kline.1min\",\"id\":\"123\"}",
-        Channels.klineChannel("btcusdt", CandlestickInterval.MIN1));
+        Channels.klineChannel("btcusdt", CandlestickInterval.MIN1, null, null));
   }
 }

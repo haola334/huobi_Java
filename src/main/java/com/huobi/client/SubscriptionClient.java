@@ -47,6 +47,11 @@ public interface SubscriptionClient {
       SubscriptionListener<CandlestickEvent> callback,
       SubscriptionErrorHandler errorHandler);
 
+  void subscribeCandlestickEvent(String symbols, CandlestickInterval interval,
+                                 int from, int to,
+                                 SubscriptionListener<CandlestickEvent> callback,
+                                 SubscriptionErrorHandler errorHandler);
+
   /**
    * Subscribe price depth event. If the price depth is updated, server will send the data to client
    * and onReceive in callback will be called.
