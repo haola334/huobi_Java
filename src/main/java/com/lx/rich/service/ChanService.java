@@ -1,11 +1,13 @@
 package com.lx.rich.service;
 
 import java.util.List;
+import java.util.Stack;
 
 import com.google.common.collect.Lists;
 import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.Bi;
 import com.lx.rich.model.CandleDetail;
+import com.lx.rich.model.Fenxing;
 import com.lx.rich.utils.CandleUtils;
 
 /**
@@ -62,8 +64,53 @@ public class ChanService {
 
 	public List<Bi> findBi(List<CandleDetail> sources) {
 
+		Stack<CandleDetail> fenxingStack = new Stack<>();
+
+		for (int i = 0; i < sources.size(); i++) {
+			if (i < 2) {
+				continue;
+			}
+
+			CandleDetail candleDetail1 = sources.get(i);
+			CandleDetail candleDetail2 = sources.get(i - 1);
+			CandleDetail candleDetail3 = sources.get(i - 2);
+			if (isTop(candleDetail1, candleDetail2, candleDetail3)) {
+				candleDetail2.setFenxing(Fenxing.TOP);
+				candleDetail2.setFenxingLeft(candleDetail1);
+				candleDetail2.setFenxingRight(candleDetail3);
+			}
+			else if (isBottom(candleDetail1, candleDetail2, candleDetail3)) {
+				candleDetail2.setFenxing(Fenxing.BOTTOM);
+				candleDetail2.setFenxingLeft(candleDetail1);
+				candleDetail2.setFenxingRight(candleDetail3);
+			}
+
+			if (candleDetail2.getFenxing() != null) {
+				if (fenxingStack.isEmpty()) {
+					fenxingStack.push(candleDetail2);
+				}
+				else {
+
+				}
+			}
+
+		}
+
+
 		return null;
 
+
+	}
+
+	private boolean isBottom(CandleDetail candleDetail1, CandleDetail candleDetail2, CandleDetail candleDetail3) {
+		return candleDetail2.getHigh().compareTo(candleDetail1.getHigh()) < 0
+				&& candleDetail2.getHigh().compareTo(candleDetail3.getHigh()) < 0;
+	}
+
+	private boolean isTop(CandleDetail candleDetail1, CandleDetail candleDetail2, CandleDetail candleDetail3) {
+
+		return candleDetail2.getHigh().compareTo(candleDetail1.getHigh()) > 0
+				&& candleDetail2.getHigh().compareTo(candleDetail3.getHigh()) > 0;
 
 	}
 
