@@ -93,7 +93,7 @@ public class ChanService {
 
 				Bi lastBi = biList.isEmpty() ? null : biList.get(biList.size() - 1);
 
-				if (lastBi == null) {
+				if (lastBi == null || !fenxingStack.isEmpty()) {
 
 					if (fenxingStack.size() < 3) { //少于3个元素都不能构成笔，直接塞进去，后面再判断
 						fenxingStack.push(currentFenxing);
@@ -106,28 +106,11 @@ public class ChanService {
 					//2、分型1 + n个分型1 + 分型2，这个等价于 分型1+n个k + 分型2 + n个k + 分型1
 					//这几种情况都有一个原则，要确定笔的方向，需要找到不包含重复k的最近2个分型。
 
-					boolean findBi = false;
-					for (int j = fenxingStack.size() - 2; j >= 0; j--) {
-						CandleDetail element = fenxingStack.elementAt(j);
+					Bi bi = findBi(fenxingStack, currentFenxing, fenxingStack.size());
 
-						if (element.getFenxing() == targetFenxing) {
-							if (currentFenxing.getFenxing() == Fenxing.TOP) {
-								if (element.getLow().compareTo(candleDetail1.getLow()) < 0
-										&& element.getLow().compareTo(candleDetail3.getLow()) < 0) {
-									Bi bi = new Bi();
-									bi.setUp(true);
-									bi.setFrom(element);
-									bi.setTo(currentFenxing);
-									biList.add(bi);
-									fenxingStack.clear();
-									findBi = true;
-									break;
-								}
-							}
-						}
-					}
-
-					if (findBi) {
+					if (bi != null) {
+						biList.add(bi);
+						fenxingStack.clear();
 						continue;
 					}
 
@@ -135,7 +118,20 @@ public class ChanService {
 
 					for (int j = fenxingStack.size() - 2; j >= 0; j--) {
 						CandleDetail element = fenxingStack.elementAt(j);
-						if (element.getFenxing() == )
+						if (element.getFenxing() == targetFenxing) {
+							bi = findBi(fenxingStack, element, j);
+
+							if (bi != null) {
+								biList.add(bi);
+								fenxingStack.clear();
+							}
+
+							break;
+						}
+					}
+
+					if (bi == null) {
+						fenxingStack.push(currentFenxing);
 					}
 
 				}
@@ -170,11 +166,14 @@ public class ChanService {
 
 	}
 
-	private Bi findBi(Stack<CandleDetail> fenxingStack, CandleDetail currentFenxing, CandleDetail fenxingLeft, CandleDetail fenxingRight) {
+	private Bi findBi(Stack<CandleDetail> fenxingStack, CandleDetail currentFenxing, int curIndex) {
+
+		CandleDetail fenxingLeft = currentFenxing.getFenxingLeft();
+		CandleDetail fenxingRight = currentFenxing.getFenxingRight();
 
 		Fenxing targetFenxing = currentFenxing.getFenxing() == Fenxing.TOP ? Fenxing.BOTTOM : Fenxing.TOP;
 
-		for (int j = fenxingStack.size() - 2; j >= 0; j--) {
+		for (int j = curIndex - 2; j >= 0; j--) {
 			CandleDetail element = fenxingStack.elementAt(j);
 
 			if (element.getFenxing() == targetFenxing) {
