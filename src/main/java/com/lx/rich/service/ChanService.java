@@ -66,6 +66,7 @@ public class ChanService {
 
 		Stack<CandleDetail> fenxingStack = new Stack<>();
 
+		List<Bi> biList = Lists.newArrayList();
 		for (int i = 0; i < sources.size(); i++) {
 			if (i < 2) {
 				continue;
@@ -85,13 +86,81 @@ public class ChanService {
 				candleDetail2.setFenxingRight(candleDetail3);
 			}
 
+
 			if (candleDetail2.getFenxing() != null) {
-				if (fenxingStack.isEmpty()) {
-					fenxingStack.push(candleDetail2);
-				}
-				else {
+				CandleDetail currentFenxing = candleDetail2;
+
+
+				Bi lastBi = biList.isEmpty() ? null : biList.get(biList.size() - 1);
+
+				if (lastBi == null) {
+
+					if (fenxingStack.size() < 3) { //少于3个元素都不能构成笔，直接塞进去，后面再判断
+						fenxingStack.push(currentFenxing);
+						continue;
+					}
+
+					Fenxing targetFenxing = currentFenxing.getFenxing() == Fenxing.TOP ? Fenxing.BOTTOM : Fenxing.TOP;
+					//几种情况：
+					//1、最标准的，分型1 + n个k + 分型2
+					//2、分型1 + n个分型1 + 分型2，这个等价于 分型1+n个k + 分型2 + n个k + 分型1
+					//这几种情况都有一个原则，要确定笔的方向，需要找到不包含重复k的最近2个分型。
+
+					boolean findBi = false;
+					for (int j = fenxingStack.size() - 2; j >= 0; j--) {
+						CandleDetail element = fenxingStack.elementAt(j);
+
+						if (element.getFenxing() == targetFenxing) {
+							if (currentFenxing.getFenxing() == Fenxing.TOP) {
+								if (element.getLow().compareTo(candleDetail1.getLow()) < 0
+										&& element.getLow().compareTo(candleDetail3.getLow()) < 0) {
+									Bi bi = new Bi();
+									bi.setUp(true);
+									bi.setFrom(element);
+									bi.setTo(currentFenxing);
+									biList.add(bi);
+									fenxingStack.clear();
+									findBi = true;
+									break;
+								}
+							}
+						}
+					}
+
+					if (findBi) {
+						continue;
+					}
+
+					//如果从当前分型往前找，没构成一笔，那么从倒数第一个与之分型相反的分型开始找
+
+					for (int j = fenxingStack.size() - 2; j >= 0; j--) {
+						CandleDetail element = fenxingStack.elementAt(j);
+						if (element.getFenxing() == )
+					}
 
 				}
+				else {
+					if (currentFenxing.getFenxing() == Fenxing.TOP) {
+						//如果是顶分型且最后一笔的方向向上，则判断该顶分型的最高是否高于笔的最高，如果高于，则替换顶
+						if (lastBi.isUp()) {
+							if (currentFenxing.getHigh().compareTo(lastBi.getTo().getHigh()) >= 0) {
+								lastBi.setTo(currentFenxing);
+							}
+						}
+
+						//如果是向下的一笔，则什么都不用干
+					}
+					else if (currentFenxing.getFenxing() == Fenxing.BOTTOM) {
+						if (!lastBi.isUp()) {
+							if (currentFenxing.getLow().compareTo(lastBi.getTo().getLow()) <= 0) {
+								lastBi.setTo(currentFenxing);
+							}
+						}
+					}
+				}
+			}
+			else {
+				fenxingStack.push(candleDetail1);
 			}
 
 		}
@@ -99,7 +168,39 @@ public class ChanService {
 
 		return null;
 
+	}
 
+	private Bi findBi(Stack<CandleDetail> fenxingStack, CandleDetail currentFenxing, CandleDetail fenxingLeft, CandleDetail fenxingRight) {
+
+		Fenxing targetFenxing = currentFenxing.getFenxing() == Fenxing.TOP ? Fenxing.BOTTOM : Fenxing.TOP;
+
+		for (int j = fenxingStack.size() - 2; j >= 0; j--) {
+			CandleDetail element = fenxingStack.elementAt(j);
+
+			if (element.getFenxing() == targetFenxing) {
+				if (currentFenxing.getFenxing() == Fenxing.TOP) {
+					if (element.getLow().compareTo(fenxingLeft.getLow()) < 0
+							&& element.getLow().compareTo(fenxingRight.getLow()) < 0) {
+						Bi bi = new Bi();
+						bi.setUp(true);
+						bi.setFrom(element);
+						bi.setTo(currentFenxing);
+						return bi;
+					}
+				} else {
+					if (element.getHigh().compareTo(fenxingLeft.getHigh()) > 0
+							&& element.getHigh().compareTo(fenxingLeft.getHigh()) > 0) {
+						Bi bi = new Bi();
+						bi.setUp(true);
+						bi.setFrom(element);
+						bi.setTo(currentFenxing);
+						return bi;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private boolean isBottom(CandleDetail candleDetail1, CandleDetail candleDetail2, CandleDetail candleDetail3) {
