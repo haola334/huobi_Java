@@ -16,6 +16,14 @@ public class Candlestick {
   private BigDecimal high;
   private BigDecimal volume;
 
+  public Candlestick() {
+  }
+
+  public Candlestick(BigDecimal low, BigDecimal high) {
+    this.low = low;
+    this.high = high;
+  }
+
   /**
    * Get the UNIX formatted timestamp in UTC.
    *

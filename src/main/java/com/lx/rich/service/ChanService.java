@@ -25,7 +25,7 @@ public class ChanService {
 	 */
 	public List<CandleDetail> removeInclude(List<Candlestick> sources) {
 		List<CandleDetail> result = Lists.newArrayList();
-		//注意，这个sources的倒序排的，最新的放在最前面
+		//注意，这个sources需要按时间从小到大排序，不然会有问题
 		for (int i = 0; i < sources.size(); i++) {
 			if (i < 2) {
 				result.add(CandleUtils.toCandleDetail(sources.get(i)));
@@ -38,10 +38,10 @@ public class ChanService {
 			boolean up = false;
 			boolean down = false;
 
-			if (last2.getHigh().compareTo(last1.getHigh()) > 0) {
+			if (last1.getHigh().compareTo(last2.getHigh()) > 0) {
 				up = true;
 			}
-			else if (last2.getLow().compareTo(last1.getLow()) < 0) {
+			else if (last1.getLow().compareTo(last2.getLow()) < 0) {
 				down = true;
 			}
 			else {
@@ -50,14 +50,18 @@ public class ChanService {
 
 			Candlestick current = sources.get(i);
 
-			if (isInclude(current, last1)) {
-				result.set(i - 1, CandleUtils.toCandleDetail(mergeCandle(current, last1, up)));
+			if (isInclude(last1, current)) {
+				result.set(result.size() - 1, CandleUtils.toCandleDetail(mergeCandle(last1, current, up)));
 			}
 			else {
 				result.add(CandleUtils.toCandleDetail(current));
 			}
 
 		}
+
+		//因为头两个k并没有能区分出方向，所以无法merge，
+		// 所以如果从第一根到第五根都是包含关系，那么最终的结果是2根
+
 
 		return result;
 	}
@@ -67,6 +71,7 @@ public class ChanService {
 		Stack<CandleDetail> fenxingStack = new Stack<>();
 
 		List<Bi> biList = Lists.newArrayList();
+		//注意，这个sources需要按时间从小到大排序，不然会有问题
 		for (int i = 0; i < sources.size(); i++) {
 			if (i < 2) {
 				continue;
@@ -75,15 +80,29 @@ public class ChanService {
 			CandleDetail candleDetail1 = sources.get(i);
 			CandleDetail candleDetail2 = sources.get(i - 1);
 			CandleDetail candleDetail3 = sources.get(i - 2);
-			if (isTop(candleDetail1, candleDetail2, candleDetail3)) {
+			if (isTop(candleDetail3, candleDetail2, candleDetail1)) {
 				candleDetail2.setFenxing(Fenxing.TOP);
-				candleDetail2.setFenxingLeft(candleDetail1);
-				candleDetail2.setFenxingRight(candleDetail3);
+				candleDetail2.setFenxingLeft(candleDetail3);
+				candleDetail2.setFenxingRight(candleDetail1);
+				if (i + 1 < sources.size()) {
+					candleDetail2.setFenxingRightAfter(sources.get(i + 1));
+				}
+
+				if (i - 3 >= 0) {
+					candleDetail3.setFenxingLeftBefore(sources.get(i - 3));
+				}
 			}
-			else if (isBottom(candleDetail1, candleDetail2, candleDetail3)) {
+			else if (isBottom(candleDetail3, candleDetail2, candleDetail1)) {
 				candleDetail2.setFenxing(Fenxing.BOTTOM);
-				candleDetail2.setFenxingLeft(candleDetail1);
-				candleDetail2.setFenxingRight(candleDetail3);
+				candleDetail2.setFenxingLeft(candleDetail3);
+				candleDetail2.setFenxingRight(candleDetail1);
+				if (i + 1 < sources.size()) {
+					candleDetail2.setFenxingRightAfter(sources.get(i + 1));
+				}
+
+				if (i - 3 >= 0) {
+					candleDetail3.setFenxingLeftBefore(sources.get(i - 3));
+				}
 			}
 
 
@@ -144,7 +163,11 @@ public class ChanService {
 							}
 						}
 
-						//如果是向下的一笔，则什么都不用干
+						//如果是向下的一笔，则判断是否构成一笔
+						Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
+						if (newBi != null) {
+							biList.add(newBi);
+						}
 					}
 					else if (currentFenxing.getFenxing() == Fenxing.BOTTOM) {
 						if (!lastBi.isUp()) {
@@ -152,11 +175,18 @@ public class ChanService {
 								lastBi.setTo(currentFenxing);
 							}
 						}
+
+						Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
+						if (newBi != null) {
+							biList.add(newBi);
+						}
 					}
 				}
 			}
 			else {
-				fenxingStack.push(candleDetail1);
+				if (!fenxingStack.isEmpty()) {
+					fenxingStack.push(candleDetail1);
+				}
 			}
 
 		}
@@ -164,6 +194,52 @@ public class ChanService {
 
 		return null;
 
+	}
+
+	private Bi buildBi(CandleDetail from, CandleDetail to) {
+
+		if (canBuildBi(from, to)) {
+			Bi bi = new Bi();
+			bi.setFrom(from);
+			bi.setTo(to);
+			bi.setUp(from.getFenxing() == Fenxing.BOTTOM);
+		}
+
+		return null;
+	}
+
+	private boolean canBuildBi(CandleDetail from, CandleDetail to) {
+
+
+		if (from == to || from.getFenxingLeft() == to.getFenxingLeft()
+				|| from.getFenxingLeft() == to.getFenxingLeftBefore()
+				|| from.getFenxingLeft() == to.getFenxingRight()
+				|| from.getFenxingLeft() == to.getFenxingRightAfter()
+				|| from.getFenxingRight() == to.getFenxingLeft()
+				|| from.getFenxingRight() == to.getFenxingLeftBefore()
+				|| from.getFenxingRight() == to.getFenxingRight()
+				|| from.getFenxingRight() == to.getFenxingRightAfter()
+				|| from.getFenxingLeftBefore() == to.getFenxingLeft()
+				|| from.getFenxingLeftBefore() == to.getFenxingLeftBefore()
+				|| from.getFenxingLeftBefore() == to.getFenxingRight()
+				|| from.getFenxingLeftBefore() == to.getFenxingRightAfter()
+				|| from.getFenxingRightAfter() == to.getFenxingLeft()
+				|| from.getFenxingRightAfter() == to.getFenxingRight()
+				|| from.getFenxingLeftBefore() == to.getFenxingRightAfter()) {
+			return false;
+		}
+
+		if (from.getFenxing() == Fenxing.TOP) {
+			if (from.getHigh().compareTo(to.getLow()) <= 0) {
+				return false;
+			}
+		} else {
+			if (from.getLow().compareTo(to.getHigh()) >= 0) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private Bi findBi(Stack<CandleDetail> fenxingStack, CandleDetail currentFenxing, int curIndex) {
@@ -186,7 +262,8 @@ public class ChanService {
 						bi.setTo(currentFenxing);
 						return bi;
 					}
-				} else {
+				}
+				else {
 					if (element.getHigh().compareTo(fenxingLeft.getHigh()) > 0
 							&& element.getHigh().compareTo(fenxingLeft.getHigh()) > 0) {
 						Bi bi = new Bi();
@@ -288,5 +365,6 @@ public class ChanService {
 
 		return false;
 	}
+
 
 }
