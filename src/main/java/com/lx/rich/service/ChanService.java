@@ -89,7 +89,7 @@ public class ChanService {
 				}
 
 				if (i - 3 >= 0) {
-					candleDetail3.setFenxingLeftBefore(sources.get(i - 3));
+					candleDetail2.setFenxingLeftBefore(sources.get(i - 3));
 				}
 			}
 			else if (isBottom(candleDetail3, candleDetail2, candleDetail1)) {
@@ -101,7 +101,7 @@ public class ChanService {
 				}
 
 				if (i - 3 >= 0) {
-					candleDetail3.setFenxingLeftBefore(sources.get(i - 3));
+					candleDetail2.setFenxingLeftBefore(sources.get(i - 3));
 				}
 			}
 
@@ -161,12 +161,13 @@ public class ChanService {
 							if (currentFenxing.getHigh().compareTo(lastBi.getTo().getHigh()) >= 0) {
 								lastBi.setTo(currentFenxing);
 							}
-						}
+						} else {
 
-						//如果是向下的一笔，则判断是否构成一笔
-						Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
-						if (newBi != null) {
-							biList.add(newBi);
+							//如果是向下的一笔，则判断是否构成一笔
+							Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
+							if (newBi != null) {
+								biList.add(newBi);
+							}
 						}
 					}
 					else if (currentFenxing.getFenxing() == Fenxing.BOTTOM) {
@@ -174,11 +175,12 @@ public class ChanService {
 							if (currentFenxing.getLow().compareTo(lastBi.getTo().getLow()) <= 0) {
 								lastBi.setTo(currentFenxing);
 							}
-						}
+						} else {
 
-						Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
-						if (newBi != null) {
-							biList.add(newBi);
+							Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
+							if (newBi != null) {
+								biList.add(newBi);
+							}
 						}
 					}
 				}
@@ -192,7 +194,7 @@ public class ChanService {
 		}
 
 
-		return null;
+		return biList;
 
 	}
 
@@ -203,6 +205,7 @@ public class ChanService {
 			bi.setFrom(from);
 			bi.setTo(to);
 			bi.setUp(from.getFenxing() == Fenxing.BOTTOM);
+			return bi;
 		}
 
 		return null;
@@ -219,13 +222,13 @@ public class ChanService {
 				|| from.getFenxingRight() == to.getFenxingLeftBefore()
 				|| from.getFenxingRight() == to.getFenxingRight()
 				|| from.getFenxingRight() == to.getFenxingRightAfter()
-				|| from.getFenxingLeftBefore() == to.getFenxingLeft()
-				|| from.getFenxingLeftBefore() == to.getFenxingLeftBefore()
-				|| from.getFenxingLeftBefore() == to.getFenxingRight()
-				|| from.getFenxingLeftBefore() == to.getFenxingRightAfter()
-				|| from.getFenxingRightAfter() == to.getFenxingLeft()
-				|| from.getFenxingRightAfter() == to.getFenxingRight()
-				|| from.getFenxingLeftBefore() == to.getFenxingRightAfter()) {
+				|| (from.getFenxingLeftBefore() != null && (from.getFenxingLeftBefore() == to.getFenxingLeft()))
+				|| (from.getFenxingLeftBefore() != null && (from.getFenxingLeftBefore() == to.getFenxingLeftBefore()))
+				|| (from.getFenxingLeftBefore() != null && (from.getFenxingLeftBefore() == to.getFenxingRight()))
+				|| (from.getFenxingLeftBefore() != null && (from.getFenxingLeftBefore() == to.getFenxingRightAfter()))
+				|| (from.getFenxingRightAfter() != null && (from.getFenxingRightAfter() == to.getFenxingLeft()))
+				|| (from.getFenxingRightAfter() != null && (from.getFenxingRightAfter() == to.getFenxingRight()))
+				|| (from.getFenxingRightAfter() != null && (from.getFenxingRightAfter() == to.getFenxingRightAfter()))) {
 			return false;
 		}
 
