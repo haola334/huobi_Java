@@ -1,5 +1,6 @@
 package com.lx.rich.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Stack;
 
@@ -8,7 +9,9 @@ import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.Bi;
 import com.lx.rich.model.CandleDetail;
 import com.lx.rich.model.Fenxing;
+import com.lx.rich.model.ZhongShu;
 import com.lx.rich.utils.CandleUtils;
+import javafx.util.Pair;
 
 /**
  * TODO completion javadoc.
@@ -161,7 +164,8 @@ public class ChanService {
 							if (currentFenxing.getHigh().compareTo(lastBi.getTo().getHigh()) >= 0) {
 								lastBi.setTo(currentFenxing);
 							}
-						} else {
+						}
+						else {
 
 							//如果是向下的一笔，则判断是否构成一笔
 							Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
@@ -175,7 +179,8 @@ public class ChanService {
 							if (currentFenxing.getLow().compareTo(lastBi.getTo().getLow()) <= 0) {
 								lastBi.setTo(currentFenxing);
 							}
-						} else {
+						}
+						else {
 
 							Bi newBi = buildBi(lastBi.getTo(), currentFenxing);
 							if (newBi != null) {
@@ -197,6 +202,73 @@ public class ChanService {
 		return biList;
 
 	}
+
+	//找到给定级别的中枢
+	public List<ZhongShu> findZhongshu(List<Bi> biList, int level) {
+
+		List<ZhongShu> result = Lists.newArrayList();
+		//第一级别的中枢很简单，就直接找重叠部分即可
+		if (level == 1) {
+			List<Bi> latestBis = Lists.newArrayList();    //用来存最近几笔
+			for (int i = 0; i < biList.size(); i++) {
+				Bi currBi = biList.get(i);
+
+				//从第四笔开始看
+				if (latestBis.size() < 4) {
+					latestBis.add(currBi);
+					continue;
+				}
+
+
+				//倒数第二笔的高点只要高于第一笔的低点即可
+				latestBis.add(currBi);
+				Pair<BigDecimal, BigDecimal> zhongshuRange = findZhongshuRange(latestBis);
+
+				if (zhongshuRange != null) {
+					ZhongShu zhongShu = new ZhongShu();
+
+					zhongShu.setBiList(latestBis);
+					zhongShu.setLevel(level);
+					zhongShu.setZd(zhongshuRange.getKey());
+					zhongShu.setZg(zhongshuRange.getValue());
+
+					result.add(zhongShu);
+					latestBis = Lists.newArrayList();
+				}
+
+			}
+		}
+
+		return result;
+	}
+
+	private Pair<BigDecimal, BigDecimal> findZhongshuRange(List<Bi> biList) {
+		//特征笔，即倒数第二笔
+		Bi tezhengBi = biList.get(biList.size() - 2);
+		Bi firstBi = biList.get(biList.size() - 4);
+		if (tezhengBi.isUp()) {
+			if (tezhengBi.getTo().getHigh().compareTo(firstBi.getTo().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+
+				return new Pair<>(firstBi.getTo().getLow(), tezhengBi.getTo().getHigh());
+
+			}
+		}
+		else {
+			if (tezhengBi.getTo().getLow().compareTo(firstBi.getTo().getHigh()) < 0) {
+
+				return new Pair<>(tezhengBi.getTo().getLow(), firstBi.getTo().getHigh());
+
+			}
+		}
+
+		return null;
+
+	}
+
+	private boolean inRange(BigDecimal dot, BigDecimal rangeLow, BigDecimal rangeHigh) {
+		return dot.compareTo(rangeLow) > 0 && dot.compareTo(rangeHigh) < 0;
+	}
+
 
 	private Bi buildBi(CandleDetail from, CandleDetail to) {
 
@@ -236,7 +308,8 @@ public class ChanService {
 			if (from.getHigh().compareTo(to.getLow()) <= 0) {
 				return false;
 			}
-		} else {
+		}
+		else {
 			if (from.getLow().compareTo(to.getHigh()) >= 0) {
 				return false;
 			}
@@ -368,6 +441,5 @@ public class ChanService {
 
 		return false;
 	}
-
 
 }
