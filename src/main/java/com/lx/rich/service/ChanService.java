@@ -2,14 +2,18 @@ package com.lx.rich.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.Bi;
 import com.lx.rich.model.CandleDetail;
 import com.lx.rich.model.Fenxing;
 import com.lx.rich.model.ZhongShu;
+import com.lx.rich.model.Zoushi;
 import com.lx.rich.utils.CandleUtils;
 import javafx.util.Pair;
 
@@ -203,60 +207,195 @@ public class ChanService {
 
 	}
 
-	//找到给定级别的中枢
-	public List<ZhongShu> findZhongshu(List<Bi> biList, int level) {
+	private List<ZhongShu> findZhongshu(List<Zoushi> zoushiList) {
+		List<ZhongShu> zhongShus = Lists.newArrayList();
 
-		List<ZhongShu> result = Lists.newArrayList();
+		List<Zoushi> latestZoushi = Lists.newArrayList();    //用来存最近几笔
+
+
+		for (int i = 0; i < zoushiList.size(); i++) {
+			Zoushi currZoushi = zoushiList.get(i);
+
+			//从第四笔开始看
+			if (latestZoushi.size() < 4) {
+				latestZoushi.add(currZoushi);
+				continue;
+			}
+
+			latestZoushi.add(currZoushi);
+			Pair<BigDecimal, BigDecimal> zhongshuRange = findZhongshuRange(latestZoushi);
+
+			if (zhongshuRange != null) {
+				ZhongShu zhongShu = new ZhongShu();
+
+				zhongShu.setZoushiList(latestZoushi.subList(1, latestZoushi.size()));
+				zhongShu.setLevel(currZoushi.getLevel() + 1);
+				zhongShu.setZd(zhongshuRange.getKey());
+				zhongShu.setZg(zhongshuRange.getValue());
+
+				zhongShus.add(zhongShu);
+				latestZoushi = Lists.newArrayList();
+			}
+
+		}
+
+		return zhongShus;
+
+	}
+
+	//找到给定级别及其以下级别的中枢
+	public Map<Integer, List<ZhongShu>> findZhongshu(List<Bi> biList, int level) {
+
+		List<ZhongShu> zhongShus = Lists.newArrayList();
+
+		Map<Integer, List<ZhongShu>> zhongshuMap = Maps.newHashMap();
 		//第一级别的中枢很简单，就直接找重叠部分即可
+		List<Zoushi> zoushiList = biList.stream().map(x -> biToZoushi(x)).collect(Collectors.toList());
+
+		zhongshuMap.put(1, findZhongshu(zoushiList));
 		if (level == 1) {
-			List<Bi> latestBis = Lists.newArrayList();    //用来存最近几笔
-			for (int i = 0; i < biList.size(); i++) {
-				Bi currBi = biList.get(i);
+			return zhongshuMap;
+		}
 
-				//从第四笔开始看
-				if (latestBis.size() < 4) {
-					latestBis.add(currBi);
-					continue;
-				}
+		for (int i = 2; i <= level; i++) {
+			zhongshuMap.put(i, findFromLowLevelZhongshus(zhongshuMap.get(i - 1)));
+		}
+
+		return zhongshuMap;
+	}
+
+	private Zoushi biToZoushi(Bi bi) {
+		Zoushi zoushi = new Zoushi();
+		zoushi.setUp(bi.isUp());
+		zoushi.setFrom(bi.getFrom());
+		zoushi.setTo(bi.getTo());
+		zoushi.setLevel(0);
+
+		return zoushi;
+	}
+
+	private List<ZhongShu> findFromLowLevelZhongshus(List<ZhongShu> zhongShus) {
+
+		//先构造走势
+		List<Zoushi> zoushis = Lists.newArrayList();
+
+		List<ZhongShu> latestZhongshus = Lists.newArrayList();
+		for (int i = 0; i < zhongShus.size(); i++) {
+			ZhongShu currZhongshu = zhongShus.get(i);
+
+			if (i < 2) {
+				latestZhongshus.add(currZhongshu);
+				continue;
+			}
+
+			if (isReverseZhongshu(latestZhongshus, currZhongshu)) {
+				Zoushi zoushi = new Zoushi();
+				zoushi.setZhongShuList(latestZhongshus);
+				zoushi.setUp(isZhongshuUp(latestZhongshus));
+
+				ZhongShu firstZhongshu = latestZhongshus.get(0);
+				ZhongShu lastZhongshu = latestZhongshus.get(latestZhongshus.size() - 1);
+
+				zoushi.setLevel(firstZhongshu.getLevel() + 1);
+				zoushi.setFrom(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1).getTo());
+				zoushi.setTo(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1).getTo());
+				zoushis.add(zoushi);
+
+				latestZhongshus = Lists.newArrayList();
+				latestZhongshus.add(zoushi.getZhongShuList().get(zoushi.getZhongShuList().size() - 1));
+				latestZhongshus.add(currZhongshu);
+			}
+			else {
+				latestZhongshus.add(currZhongshu);
+			}
+
+		}
+
+		if (!sameList(zoushis.get(zoushis.size() - 1).getZhongShuList(), latestZhongshus)) {
+			Zoushi zoushi = new Zoushi();
+			zoushi.setZhongShuList(latestZhongshus);
+			zoushi.setUp(isZhongshuUp(latestZhongshus));
+			zoushis.add(zoushi);
+		}
 
 
-				//倒数第二笔的高点只要高于第一笔的低点即可
-				latestBis.add(currBi);
-				Pair<BigDecimal, BigDecimal> zhongshuRange = findZhongshuRange(latestBis);
+		return findZhongshu(zoushis);
+	}
 
-				if (zhongshuRange != null) {
-					ZhongShu zhongShu = new ZhongShu();
+	private boolean sameList(List<ZhongShu> list1, List<ZhongShu> list2) {
 
-					zhongShu.setBiList(latestBis);
-					zhongShu.setLevel(level);
-					zhongShu.setZd(zhongshuRange.getKey());
-					zhongShu.setZg(zhongshuRange.getValue());
+		if (list1 == list2) {
+			return true;
+		}
 
-					result.add(zhongShu);
-					latestBis = Lists.newArrayList();
-				}
+		if (list1 == null || list2 == null) {
+			return false;
+		}
 
+		if (list1.size() != list2.size()) {
+			return false;
+		}
+
+		for (int i = 0; i < list1.size(); i++) {
+			if (list1.get(i) != list2.get(i)) {
+				return false;
 			}
 		}
 
-		return result;
+		return true;
 	}
 
-	private Pair<BigDecimal, BigDecimal> findZhongshuRange(List<Bi> biList) {
-		//特征笔，即倒数第二笔
-		Bi tezhengBi = biList.get(biList.size() - 2);
-		Bi firstBi = biList.get(biList.size() - 4);
-		if (tezhengBi.isUp()) {
-			if (tezhengBi.getTo().getHigh().compareTo(firstBi.getTo().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+	private boolean isZhongshuUp(List<ZhongShu> latestZhongshus) {
+		ZhongShu lastZhongshu1 = latestZhongshus.get(latestZhongshus.size() - 1);
+		ZhongShu lastZhongshu2 = latestZhongshus.get(latestZhongshus.size() - 2);
 
-				return new Pair<>(firstBi.getTo().getLow(), tezhengBi.getTo().getHigh());
+		boolean up = false;
+
+		if (lastZhongshu1.getZg().compareTo(lastZhongshu2.getZg()) >= 0) {
+			up	= true;
+		}
+
+		return up;
+	}
+
+	//是否是方向与之前相反的中枢
+	private boolean isReverseZhongshu(List<ZhongShu> latestZhongshus, ZhongShu currZhongshu) {
+
+		ZhongShu lastZhongshu1 = latestZhongshus.get(latestZhongshus.size() - 1);
+		ZhongShu lastZhongshu2 = latestZhongshus.get(latestZhongshus.size() - 2);
+
+		boolean up = isZhongshuUp(latestZhongshus);
+
+		if (up) {
+			if (currZhongshu.getZg().compareTo(lastZhongshu1.getZg()) < 0) {
+				return true;
+			}
+		} else {
+			if (currZhongshu.getZd().compareTo(lastZhongshu1.getZd()) > 0) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private Pair<BigDecimal, BigDecimal> findZhongshuRange(List<Zoushi> zoushiList) {
+		//特征笔，即倒数第二笔
+		Zoushi tezhengZoushi = zoushiList.get(zoushiList.size() - 2);
+		Zoushi firstBi = zoushiList.get(zoushiList.size() - 4);
+
+		if (tezhengZoushi.isUp()) {
+			if (tezhengZoushi.getTo().getHigh().compareTo(firstBi.getTo().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+
+				return new Pair<>(firstBi.getTo().getLow(), tezhengZoushi.getTo().getHigh());
 
 			}
 		}
 		else {
-			if (tezhengBi.getTo().getLow().compareTo(firstBi.getTo().getHigh()) < 0) {
+			//倒数第二笔的高点只要高于第一笔的低点即可
+			if (tezhengZoushi.getTo().getLow().compareTo(firstBi.getTo().getHigh()) < 0) {
 
-				return new Pair<>(tezhengBi.getTo().getLow(), firstBi.getTo().getHigh());
+				return new Pair<>(tezhengZoushi.getTo().getLow(), firstBi.getTo().getHigh());
 
 			}
 		}
