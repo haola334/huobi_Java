@@ -23,6 +23,7 @@ public class HistoryDataService {
     private final int ONE_MIN = 60; //1分钟
     private final int BATCH_SIZE = 300 * ONE_MIN; //300分钟
 
+    private final long EIGHT_HOUR = 8 * 3600 * 1000l;
     /**
      * 都是获取1min级别的数据，因为我所有的级别都是从1min往上递归得来的
      */
@@ -34,6 +35,7 @@ public class HistoryDataService {
         System.out.println("当前加载的时间为：" + new DateTime().toString("yyyy-MM-dd HH:mm"));
 
         if (batchProcessor != null) {
+            candlestickList.forEach(x->x.setTimestamp(x.getTimestamp() + EIGHT_HOUR));
             batchProcessor.process(candlestickList);
         }
     }
@@ -47,6 +49,8 @@ public class HistoryDataService {
         loadHistoryData(new BatchProcessor() {
             @Override
             public void process(List<Candlestick> candlesticks) {
+
+
 
                 String json = JSON.toJSONString(candlesticks);
                 try {
@@ -68,7 +72,9 @@ public class HistoryDataService {
 
         String line = lines.get(0);
 
-        return JSON.parseArray(line, Candlestick.class);
+        List<Candlestick> candlesticks = JSON.parseArray(line, Candlestick.class);
+        candlesticks.forEach(x -> x.setTimestamp(x.getTimestamp() + EIGHT_HOUR));
+        return candlesticks;
 
     }
 
