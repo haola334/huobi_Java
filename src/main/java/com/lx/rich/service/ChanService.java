@@ -220,7 +220,7 @@ public class ChanService {
                 ZhongShu zhongShu = new ZhongShu();
 
                 zhongShu.setZoushiList(latestZoushi.subList(1, latestZoushi.size()));
-                zhongShu.setLevel(currZoushi.getLevel() + 1);
+                zhongShu.setLevel(currZoushi.getLevel());
                 zhongShu.setZd(zhongshuRange.getKey());
                 zhongShu.setZg(zhongshuRange.getValue());
 
@@ -260,7 +260,7 @@ public class ChanService {
         zoushi.setUp(bi.isUp());
         zoushi.setFrom(bi.getFrom());
         zoushi.setTo(bi.getTo());
-        zoushi.setLevel(0);
+        zoushi.setLevel(1);
 
         return zoushi;
     }
@@ -288,8 +288,11 @@ public class ChanService {
                 ZhongShu lastZhongshu = latestZhongshus.get(latestZhongshus.size() - 1);
 
                 zoushi.setLevel(firstZhongshu.getLevel() + 1);
-                zoushi.setFrom(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1).getTo());
-                zoushi.setTo(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1).getTo());
+
+                zoushi.setFrom(zoushi.isUp() ? lowCandle(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1)) :
+                        highCandle(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1)));
+                zoushi.setTo(zoushi.isUp() ? highCandle(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1)) :
+                        lowCandle(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1)));
                 zoushis.add(zoushi);
 
                 latestZhongshus = Lists.newArrayList();
@@ -305,11 +308,45 @@ public class ChanService {
             Zoushi zoushi = new Zoushi();
             zoushi.setZhongShuList(latestZhongshus);
             zoushi.setUp(isZhongshuUp(latestZhongshus));
+
+            ZhongShu firstZhongshu = latestZhongshus.get(0);
+            ZhongShu lastZhongshu = latestZhongshus.get(latestZhongshus.size() - 1);
+
+            zoushi.setLevel(firstZhongshu.getLevel() + 1);
+
+            zoushi.setFrom(zoushi.isUp() ? lowCandle(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1)) :
+                    highCandle(firstZhongshu.getZoushiList().get(firstZhongshu.getZoushiList().size() - 1)));
+            zoushi.setTo(zoushi.isUp() ? highCandle(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1)) :
+                    lowCandle(lastZhongshu.getZoushiList().get(lastZhongshu.getZoushiList().size() - 1)));
             zoushis.add(zoushi);
         }
 
 
         return findZhongshu(zoushis);
+    }
+
+    private CandleDetail lowCandle(Zoushi zoushi) {
+        return lowCandle(zoushi.getFrom(), zoushi.getTo());
+    }
+
+    private CandleDetail highCandle(Zoushi zoushi) {
+        return highCandle(zoushi.getFrom(), zoushi.getTo());
+    }
+
+    private CandleDetail lowCandle(CandleDetail candleDetail1, CandleDetail candleDetail2) {
+        if (candleDetail1.getLow().compareTo(candleDetail2.getLow()) < 0) {
+            return candleDetail1;
+        }
+
+        return candleDetail2;
+    }
+
+    private CandleDetail highCandle(CandleDetail candleDetail1, CandleDetail candleDetail2) {
+        if (candleDetail1.getHigh().compareTo(candleDetail2.getHigh()) > 0) {
+            return candleDetail1;
+        }
+
+        return candleDetail2;
     }
 
     private boolean sameList(List<ZhongShu> list1, List<ZhongShu> list2) {
