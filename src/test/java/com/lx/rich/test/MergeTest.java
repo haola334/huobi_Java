@@ -9,9 +9,8 @@ import com.google.common.collect.Lists;
 import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.CandleDetail;
 import com.lx.rich.service.ChanService;
-import com.sun.source.tree.AssertTree;
+import org.junit.Assert;
 import org.junit.Test;
-import sun.jvm.hotspot.utilities.Assert;
 
 /**
  * TODO completion javadoc.
@@ -35,7 +34,7 @@ public class MergeTest {
 
 		List<CandleDetail> candleDetails = chanService.removeInclude(candlesticks);
 
-		Assert.that(candleDetails.size() == candlesticks.size(), "不包含的情况下不应该merge");
+		Assert.assertTrue("不包含的情况下不应该merge", candleDetails.size() == candlesticks.size());
 
 	}
 
@@ -54,7 +53,7 @@ public class MergeTest {
 		// 所以如果从第一根到第五根都是包含关系，那么最终的结果是2根
 		System.out.println(JSON.toJSONString(candleDetails));
 
-		Assert.that(candleDetails.size() == 2, "应该是2根！");
+		Assert.assertTrue("应该是2根！", candleDetails.size() == 2);
 	}
 
 

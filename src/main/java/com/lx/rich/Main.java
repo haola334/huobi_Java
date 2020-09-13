@@ -1,6 +1,7 @@
 package com.lx.rich;
 
 import com.huobi.client.model.Candlestick;
+import com.lx.rich.service.ChanService;
 import com.lx.rich.service.HistoryDataService;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -20,7 +21,6 @@ public class Main {
         List<Candlestick> candlesticks = historyDataService.loadDataFromFile();
 
         System.out.println(candlesticks.size());
-
 
     }
 

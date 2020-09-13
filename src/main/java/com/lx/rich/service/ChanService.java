@@ -217,12 +217,11 @@ public class ChanService {
 			Zoushi currZoushi = zoushiList.get(i);
 
 			//从第四笔开始看
+			latestZoushi.add(currZoushi);
 			if (latestZoushi.size() < 4) {
-				latestZoushi.add(currZoushi);
 				continue;
 			}
 
-			latestZoushi.add(currZoushi);
 			Pair<BigDecimal, BigDecimal> zhongshuRange = findZhongshuRange(latestZoushi);
 
 			if (zhongshuRange != null) {
@@ -385,17 +384,17 @@ public class ChanService {
 		Zoushi firstBi = zoushiList.get(zoushiList.size() - 4);
 
 		if (tezhengZoushi.isUp()) {
-			if (tezhengZoushi.getTo().getHigh().compareTo(firstBi.getTo().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+			if (tezhengZoushi.getFrom().getLow().compareTo(firstBi.getTo().getHigh()) < 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
 
-				return new Pair<>(firstBi.getTo().getLow(), tezhengZoushi.getTo().getHigh());
+				return new Pair<>(tezhengZoushi.getFrom().getLow(), firstBi.getTo().getHigh());
 
 			}
 		}
 		else {
-			//倒数第二笔的高点只要高于第一笔的低点即可
-			if (tezhengZoushi.getTo().getLow().compareTo(firstBi.getTo().getHigh()) < 0) {
+			//倒数第二笔的高点大于倒数第一笔的低点即可
+			if (tezhengZoushi.getFrom().getHigh().compareTo(firstBi.getTo().getLow()) > 0) {
 
-				return new Pair<>(tezhengZoushi.getTo().getLow(), firstBi.getTo().getHigh());
+				return new Pair<>(firstBi.getTo().getLow(), firstBi.getFrom().getHigh());
 
 			}
 		}
