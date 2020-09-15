@@ -208,24 +208,26 @@ public class ChanService {
         for (int i = 0; i < zoushiList.size(); i++) {
             Zoushi currZoushi = zoushiList.get(i);
 
-            //从第四笔开始看
+            //从第五笔开始看
             latestZoushi.add(currZoushi);
-            if (latestZoushi.size() < 4) {
+            if (latestZoushi.size() < 5) {
                 continue;
             }
 
             Pair<BigDecimal, BigDecimal> zhongshuRange = findZhongshuRange(latestZoushi);
 
+
             if (zhongshuRange != null) {
                 ZhongShu zhongShu = new ZhongShu();
 
-                zhongShu.setZoushiList(latestZoushi.subList(1, latestZoushi.size()));
+                zhongShu.setZoushiList(latestZoushi.subList(1, latestZoushi.size() - 1));
                 zhongShu.setLevel(currZoushi.getLevel());
                 zhongShu.setZd(zhongshuRange.getKey());
                 zhongShu.setZg(zhongshuRange.getValue());
 
                 zhongShus.add(zhongShu);
                 latestZoushi = Lists.newArrayList();
+                latestZoushi.add(currZoushi);
             }
 
         }
@@ -237,7 +239,6 @@ public class ChanService {
     //找到给定级别及其以下级别的中枢
     public Map<Integer, List<ZhongShu>> findZhongshu(List<Bi> biList, int level) {
 
-        List<ZhongShu> zhongShus = Lists.newArrayList();
 
         Map<Integer, List<ZhongShu>> zhongshuMap = Maps.newHashMap();
         //第一级别的中枢很简单，就直接找重叠部分即可
@@ -408,22 +409,43 @@ public class ChanService {
 
     private Pair<BigDecimal, BigDecimal> findZhongshuRange(List<Zoushi> zoushiList) {
         //特征笔，即倒数第二笔
-        Zoushi tezhengZoushi = zoushiList.get(zoushiList.size() - 2);
-        Zoushi firstBi = zoushiList.get(zoushiList.size() - 4);
+        Zoushi tezhengZoushi = zoushiList.get(zoushiList.size() - 3);
+        Zoushi firstZoushi = zoushiList.get(zoushiList.size() - 5);
+        Zoushi lastZoushi = zoushiList.get(zoushiList.size() - 1);
+
+
 
         if (tezhengZoushi.isUp()) {
-            if (tezhengZoushi.getFrom().getLow().compareTo(firstBi.getTo().getHigh()) < 0 &&
-                    tezhengZoushi.getTo().getHigh().compareTo(firstBi.getFrom().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+            if (lastZoushi.getTo().getHigh().compareTo(tezhengZoushi.getFrom().getLow()) <= 0) {
+                return null;
+            }
 
-                return new Pair<>(tezhengZoushi.getFrom().getLow(), min(firstBi.getTo().getHigh(), tezhengZoushi.getTo().getHigh()));
+            if (lastZoushi.getFrom().getLow().compareTo(firstZoushi.getTo().getHigh()) >= 0) {
+                return null;
+            }
+
+            if (tezhengZoushi.getFrom().getLow().compareTo(firstZoushi.getTo().getHigh()) < 0 &&
+                    tezhengZoushi.getTo().getHigh().compareTo(firstZoushi.getFrom().getLow()) > 0) { //fixme? 这里我不把等于的算在里面，应该会保险一点
+
+                return new Pair<>(max(tezhengZoushi.getFrom().getLow(), firstZoushi.getFrom().getLow()), min(firstZoushi.getTo().getHigh(), tezhengZoushi.getTo().getHigh()));
 
             }
         } else {
-            //倒数第二笔的高点大于倒数第一笔的低点即可
-            if (tezhengZoushi.getFrom().getHigh().compareTo(firstBi.getTo().getLow()) > 0
-                    && tezhengZoushi.getTo().getLow().compareTo(firstBi.getFrom().getHigh()) < 0) {
 
-                return new Pair<>(max(firstBi.getTo().getLow(), tezhengZoushi.getTo().getLow()), tezhengZoushi.getFrom().getHigh());
+            if (lastZoushi.getTo().getLow().compareTo(tezhengZoushi.getFrom().getHigh()) >= 0) {
+                return null;
+            }
+
+            if (lastZoushi.getFrom().getHigh().compareTo(firstZoushi.getTo().getLow()) <= 0) {
+
+                return null;
+            }
+
+            //倒数第二笔的高点大于倒数第一笔的低点即可
+            if (tezhengZoushi.getFrom().getHigh().compareTo(firstZoushi.getTo().getLow()) > 0
+                    && tezhengZoushi.getTo().getLow().compareTo(firstZoushi.getFrom().getHigh()) < 0) {
+
+                return new Pair<>(max(firstZoushi.getTo().getLow(), tezhengZoushi.getTo().getLow()), min(tezhengZoushi.getFrom().getHigh(), firstZoushi.getFrom().getHigh()));
 
             }
         }

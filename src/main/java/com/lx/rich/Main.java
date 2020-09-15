@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -31,6 +32,8 @@ public class Main {
 
         List<Candlestick> candlesticks = historyDataService.loadDataFromFile();
 
+        DateTime dateTime = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime("2020-09-05 23:15:00");
+        candlesticks = candlesticks.stream().filter(x->x.getTimestamp() < dateTime.getMillis()).collect(Collectors.toList());
         List<Candlestick> reverse = Lists.reverse(candlesticks);
         ChanService chanService = new ChanService();
 
@@ -38,16 +41,19 @@ public class Main {
 
         List<Bi> bis = chanService.findBi(candleDetails);
 
-        Map<Integer, List<ZhongShu>> zhongshuMap = chanService.findZhongshu(bis, 2);
+        int level = 2;
+
+        Map<Integer, List<ZhongShu>> zhongshuMap = chanService.findZhongshu(bis, level);
 
 
-        for (int i = 0; i < zhongshuMap.get(2).size(); i++) {
-            ZhongShu zhongShu = zhongshuMap.get(2).get(i);
+        for (int i = 0; i < zhongshuMap.get(level).size(); i++) {
+            ZhongShu zhongShu = zhongshuMap.get(level).get(i);
             System.out.println("中枢" + i +  ":");
+            int j=0;
             for (Zoushi zoushi : zhongShu.getZoushiList()) {
-                System.out.println("走势" + i + ": 从" + new Date(zoushi.getFrom().getTimestamp()) +
+                System.out.println("走势" + j + ": 从" + new Date(zoushi.getFrom().getTimestamp()) +
                         "到" + new Date(zoushi.getTo().getTimestamp()));
-
+                j++;
 //                System.out.println("内部的中枢为：");
 //                for (ZhongShu innerZhongshu : zoushi.getZhongShuList()) {
 //                    List<Zoushi> innerZoushiList = innerZhongshu.getZoushiList();
