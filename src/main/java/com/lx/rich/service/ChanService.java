@@ -256,6 +256,30 @@ public class ChanService {
         return zhongshuMap;
     }
 
+
+    /**
+     * 是否背驰
+     * @param zhongshuMap 各级别的中枢map
+     * @param level 需要判断的哪个级别及其以下级别的背驰
+     * @return 返回背驰的级别
+     */
+    public List<Integer> isBeichi(Map<Integer, List<ZhongShu>> zhongshuMap, int level) {
+        //从level级别往下看各个级别是否形成了中枢，
+        //如果形成了中枢并且macd在level中枢区间里被拉回0轴附近，
+        // 且最后一个走势的macd面积小于中枢前一个走势的macd值，则视为背驰
+
+        List<ZhongShu> zhongShus = zhongshuMap.get(level);
+
+        if (zhongShus == null) {
+            return Lists.newArrayList();
+        }
+
+        for (int i = level - 1; i > 0; i--) {
+            zhon
+        }
+
+    }
+
     private Zoushi biToZoushi(Bi bi) {
         Zoushi zoushi = new Zoushi();
         zoushi.setUp(bi.isUp());

@@ -2,6 +2,7 @@ package com.lx.rich.service;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.huobi.client.SubscriptionErrorHandler;
 import com.huobi.client.SubscriptionListener;
@@ -18,12 +19,60 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 public class HistoryDataService {
     private final int ONE_MIN = 60; //1分钟
+    private final int ONE_MINUNTE_MILL = ONE_MIN * 1000; //1分钟
     private final int BATCH_SIZE = 300 * ONE_MIN; //300分钟
 
     private final long EIGHT_HOUR = 8 * 3600 * 1000l;
+
+    private Map<Long, Candlestick> candlestickCache = Maps.newConcurrentMap();
+
+    private List<Candlestick> candlesticks = Lists.newCopyOnWriteArrayList();
+
+    public void initCache() {
+        try {
+            List<Candlestick> candlesticks = loadDataFromFile();
+
+            candlesticks.stream().forEach(x->{
+                candlestickCache.put(x.getTimestamp(), x);
+            });
+
+            this.candlesticks = Lists.newCopyOnWriteArrayList(candlesticks);
+
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Candlestick> findCandlestick(long from, long to) {
+
+        if (candlestickCache.isEmpty()) {
+            throw new RuntimeException("candlestick cache还未被初始化！");
+        }
+
+        long currTime = from;
+
+        List<Candlestick> result = Lists.newArrayList();
+        while (true) {
+            if (currTime > to) {
+                break;
+            }
+
+            Candlestick candlestick = candlestickCache.get(currTime);
+            if (candlestick != null) {
+                result.add(candlestick);
+            }
+
+            currTime += ONE_MINUNTE_MILL;
+        }
+
+        return result;
+    }
+
     /**
      * 都是获取1min级别的数据，因为我所有的级别都是从1min往上递归得来的
      */

@@ -33,7 +33,7 @@ public class Main {
         List<Candlestick> candlesticks = historyDataService.loadDataFromFile();
 
         DateTime dateTime = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime("2020-09-05 23:15:00");
-        candlesticks = candlesticks.stream().filter(x->x.getTimestamp() < dateTime.getMillis()).collect(Collectors.toList());
+//        candlesticks = candlesticks.stream().filter(x->x.getTimestamp() < dateTime.getMillis()).collect(Collectors.toList());
         List<Candlestick> reverse = Lists.reverse(candlesticks);
         ChanService chanService = new ChanService();
 
