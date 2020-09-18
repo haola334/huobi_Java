@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Maps;
 import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.CandleDetail;
@@ -25,7 +27,18 @@ public class MacdService {
 
 	private static final int ONE_MINUTE = 60 * 1000;
 
-	private Map<Long, Macd> macdCache = Maps.newHashMap();
+	private static Map<Long, Macd> macdCache = Maps.newConcurrentMap();
+
+	private static Supplier<MacdService> supplier = Suppliers.memoize(()-> new MacdService());
+
+	private MacdService() {
+
+	}
+
+	public static MacdService getInstance() {
+		return supplier.get();
+	}
+
 
 	public void buildCache(List<Candlestick> candlesticks) {
 

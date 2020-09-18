@@ -1,6 +1,8 @@
 package com.lx.rich.service;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -28,9 +30,19 @@ public class HistoryDataService {
 
     private final long EIGHT_HOUR = 8 * 3600 * 1000l;
 
-    private Map<Long, Candlestick> candlestickCache = Maps.newConcurrentMap();
+    private static Map<Long, Candlestick> candlestickCache = Maps.newConcurrentMap();
 
-    private List<Candlestick> candlesticks = Lists.newCopyOnWriteArrayList();
+    private static List<Candlestick> candlesticks = Lists.newCopyOnWriteArrayList();
+
+    private static Supplier<HistoryDataService> supplier = Suppliers.memoize(()-> new HistoryDataService());
+
+    private HistoryDataService() {
+
+    }
+
+    public static HistoryDataService getInstance() {
+        return supplier.get();
+    }
 
     public void initCache() {
         try {
@@ -46,6 +58,15 @@ public class HistoryDataService {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public synchronized void addCandlestick(Candlestick candlestick) {
+        candlesticks.add(candlestick);
+        candlestickCache.put(candlestick.getTimestamp(), candlestick);
+    }
+
+    public Candlestick getRecentCandlestick() {
+        return candlesticks.get(candlesticks.size() - 1);
     }
 
     public List<Candlestick> findCandlestick(long from, long to) {
