@@ -278,7 +278,7 @@ public class ChanService {
 	 * @param macdPercent macd的百分比，两个macd的比例低于此百分比才视为背驰
 	 * @return 返回背驰的级别
 	 */
-	public List<Integer> isBeichi(Map<Integer, List<ZhongShu>> zhongshuMap, int level, BeichiType beichiType, double macdPercent) {
+	public List<Integer> getBeichiLevel(Map<Integer, List<ZhongShu>> zhongshuMap, int level, BeichiType beichiType, double macdPercent) {
 		//从level级别往下看各个级别是否形成了中枢，
 		//如果形成了中枢并且macd在level中枢区间里被拉回0轴附近，
 		// 且最后一个走势的macd面积小于中枢前一个走势的macd值，则视为背驰
@@ -324,7 +324,7 @@ public class ChanService {
 
 		}
 
-		result.addAll(isBeichi(zhongshuMap, lowLevel, beichiType, macdPercent));
+		result.addAll(getBeichiLevel(zhongshuMap, lowLevel, beichiType, macdPercent));
 
 		return result;
 

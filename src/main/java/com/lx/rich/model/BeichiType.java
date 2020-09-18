@@ -7,7 +7,6 @@ package com.lx.rich.model;
  * @since 18 September 2020
  */
 public enum BeichiType {
-	ALL(0, "所有"),
 	PANZHENG(1, "盘整背驰"),
 	QUSHI(2, "趋势背驰"),
 

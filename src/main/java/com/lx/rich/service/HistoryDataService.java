@@ -65,6 +65,10 @@ public class HistoryDataService {
         candlestickCache.put(candlestick.getTimestamp(), candlestick);
     }
 
+    public List<Candlestick> getCandlesticks() {
+        return candlesticks;
+    }
+
     public Candlestick getRecentCandlestick() {
         return candlesticks.get(candlesticks.size() - 1);
     }
