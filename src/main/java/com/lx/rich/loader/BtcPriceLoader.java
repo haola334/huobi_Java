@@ -3,6 +3,7 @@ package com.lx.rich.loader;
 import com.google.common.collect.Lists;
 import com.huobi.client.model.Candlestick;
 import com.lx.rich.service.HistoryDataService;
+import com.lx.rich.service.MacdService;
 import org.omg.CORBA.PRIVATE_MEMBER;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BtcPriceLoader extends AbstracePriceLoader {
 
     private HistoryDataService historyDataService = HistoryDataService.getInstance();
+    private MacdService macdService = MacdService.getInstance();
 
     private List<Candlestick> all;
 
@@ -38,6 +40,8 @@ public class BtcPriceLoader extends AbstracePriceLoader {
 
         Candlestick candlestick = all.get(index.getAndIncrement());
         historyDataService.addCandlestick(candlestick);
+        int size = historyDataService.getCandlesticks().size();
+        macdService.buildCache(historyDataService.getCandlesticks().subList(size - 26, size));
 //        System.out.println("当前时间：" + new Date(candlestick.getTimestamp()) + ": 价格为" + candlestick.getClose());
 
     }

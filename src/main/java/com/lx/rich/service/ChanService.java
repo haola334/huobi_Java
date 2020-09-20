@@ -274,11 +274,12 @@ public class ChanService {
 	/**
 	 * 是否背驰
 	 * @param zhongshuMap 各级别的中枢map
+	 * @param biList
 	 * @param level 需要判断的哪个级别及其以下级别的背驰
 	 * @param macdPercent macd的百分比，两个macd的比例低于此百分比才视为背驰
 	 * @return 返回背驰的级别
 	 */
-	public List<Integer> getBeichiLevel(Map<Integer, List<ZhongShu>> zhongshuMap, int level, BeichiType beichiType, double macdPercent) {
+	public List<Integer> getBeichiLevel(Map<Integer, List<ZhongShu>> zhongshuMap, List<Bi> biList, int level, BeichiType beichiType, double macdPercent) {
 		//从level级别往下看各个级别是否形成了中枢，
 		//如果形成了中枢并且macd在level中枢区间里被拉回0轴附近，
 		// 且最后一个走势的macd面积小于中枢前一个走势的macd值，则视为背驰
@@ -306,12 +307,15 @@ public class ChanService {
 
 		List<ZhongShu> currZhongshus = zhongshuMap.get(lowLevel);
 
-		if (currZhongshus == null) {
-			return result;
-		}
-		ZhongShu currLastZhongshu = currZhongshus.get(currZhongshus.size() - 1);
 
-		Zoushi currFirstZoushi = getZhongshuFirstZoushi(currLastZhongshu);
+
+		Zoushi currFirstZoushi = null;
+		if (currZhongshus == null) {
+			currFirstZoushi = biToZoushi(biList.get(biList.size() - 1));
+		} else {
+			ZhongShu currLastZhongshu = currZhongshus.get(currZhongshus.size() - 1);
+			currFirstZoushi = getZhongshuFirstZoushi(currLastZhongshu);
+		}
 
 		Candlestick recentCandlestick = historyDataService.getRecentCandlestick();
 		if (currFirstZoushi.getFrom().getTimestamp() > targetLastZoushi.getTo().getTimestamp()) {
@@ -327,7 +331,10 @@ public class ChanService {
 
 		}
 
-		result.addAll(getBeichiLevel(zhongshuMap, lowLevel, beichiType, macdPercent));
+		if (currZhongshus == null) {
+			return result;
+		}
+		result.addAll(getBeichiLevel(zhongshuMap, biList, lowLevel, beichiType, macdPercent));
 
 		return result;
 

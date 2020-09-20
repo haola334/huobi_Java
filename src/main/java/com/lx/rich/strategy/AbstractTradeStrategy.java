@@ -25,16 +25,17 @@ public abstract class AbstractTradeStrategy {
 	protected ChanService chanService = new ChanService();
 
 
-	protected Map<Integer, List<ZhongShu>> findZhonshuMap(int level) {
+	protected List<Bi> findBi() {
 		List<Candlestick> candlesticks = historyDataService.getCandlesticks();
 
 		List<CandleDetail> candleDetails = chanService.removeInclude(candlesticks);
 
 		List<Bi> biList = chanService.findBi(candleDetails);
+		return biList;
+	}
 
+	protected Map<Integer, List<ZhongShu>> findZhonshuMap( int level, List<Bi> biList) {
 		return chanService.findZhongshu(biList, level);
-
-
 	}
 
 	protected Zoushi getLastZoushi(ZhongShu zhongShu) {

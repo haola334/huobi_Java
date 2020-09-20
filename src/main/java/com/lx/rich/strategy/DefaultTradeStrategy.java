@@ -27,14 +27,15 @@ public class DefaultTradeStrategy extends AbstractTradeStrategy implements Trade
 
 	@Override
 	public boolean shouldBuy() {
-		Map<Integer, List<ZhongShu>> zhongshuMap = findZhonshuMap(level);
+		List<Bi> biList = findBi();
+		Map<Integer, List<ZhongShu>> zhongshuMap = findZhonshuMap(level, biList);
 
 		List<ZhongShu> zhongShus = zhongshuMap.get(level);
 		if (zhongShus == null || zhongShus.isEmpty()) {
 			return false;
 		}
 
-		List<Integer> beichiLevels = chanService.getBeichiLevel(zhongshuMap, level, BeichiType.QUSHI, 0.5);
+		List<Integer> beichiLevels = chanService.getBeichiLevel(zhongshuMap, biList, level, BeichiType.QUSHI, 0.5);
 
 
 		if (!beichiLevels.contains(level)) {
