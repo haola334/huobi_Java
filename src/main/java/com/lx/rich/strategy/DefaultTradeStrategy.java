@@ -23,6 +23,8 @@ public class DefaultTradeStrategy extends AbstractTradeStrategy implements Trade
 	private BigDecimal zd = null;
 	private BigDecimal zg = null;
 
+	private final double minPercent = 0.00; //最少的盈利区间
+
 	@Override
 	public boolean shouldBuy() {
 		Map<Integer, List<ZhongShu>> zhongshuMap = findZhonshuMap(level);
@@ -53,14 +55,14 @@ public class DefaultTradeStrategy extends AbstractTradeStrategy implements Trade
 		BigDecimal currentPrice = historyDataService.getCurrentPrice();
 
 		if (zoushi.isUp()) {
-			if (currentPrice.compareTo(lastZhongshu.getZg()) <= 0) {
+			if (currentPrice.compareTo(lastZhongshu.getZg()) <= 0 || calPercent(currentPrice, zg) < minPercent) {
 				return false;
 			}
 
 			TradeContext.setTradeType(TradeType.KONG);
 
 		} else {
-			if (currentPrice.compareTo(lastZhongshu.getZd()) >= 0) {
+			if (currentPrice.compareTo(lastZhongshu.getZd()) >= 0 || calPercent(currentPrice, zd) < minPercent) {
 				return false;
 			}
 			TradeContext.setTradeType(TradeType.DUO);

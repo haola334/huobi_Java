@@ -234,7 +234,7 @@ public class ChanService {
 			if (zhongshuRange != null) {
 				ZhongShu zhongShu = new ZhongShu();
 
-				zhongShu.setZoushiList(latestZoushi.subList(1, latestZoushi.size() - 1));
+				zhongShu.setZoushiList(latestZoushi.subList(0, latestZoushi.size() - 1));
 				zhongShu.setLevel(currZoushi.getLevel());
 				zhongShu.setZd(zhongshuRange.getKey());
 				zhongShu.setZg(zhongshuRange.getValue());
@@ -306,6 +306,9 @@ public class ChanService {
 
 		List<ZhongShu> currZhongshus = zhongshuMap.get(lowLevel);
 
+		if (currZhongshus == null) {
+			return result;
+		}
 		ZhongShu currLastZhongshu = currZhongshus.get(currZhongshus.size() - 1);
 
 		Zoushi currFirstZoushi = getZhongshuFirstZoushi(currLastZhongshu);

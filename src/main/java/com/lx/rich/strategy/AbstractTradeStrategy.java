@@ -1,5 +1,6 @@
 package com.lx.rich.strategy;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -40,5 +41,11 @@ public abstract class AbstractTradeStrategy {
 		return zhongShu.getZoushiList().get(zhongShu.getZoushiList().size() - 1);
 	}
 
+	protected double calPercent(BigDecimal currPrice, BigDecimal targetPrice) {
+		double curr = currPrice.doubleValue();
+		double target = targetPrice.doubleValue();
+
+		return Math.abs(curr - target) / curr;
+	}
 
 }
