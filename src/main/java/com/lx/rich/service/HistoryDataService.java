@@ -18,6 +18,7 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.List;
@@ -71,6 +72,10 @@ public class HistoryDataService {
 
     public Candlestick getRecentCandlestick() {
         return candlesticks.get(candlesticks.size() - 1);
+    }
+
+    public BigDecimal getCurrentPrice() {
+        return getRecentCandlestick().getAmount();
     }
 
     public List<Candlestick> findCandlestick(long from, long to) {

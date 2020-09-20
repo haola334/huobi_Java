@@ -7,6 +7,7 @@ import com.huobi.client.model.Candlestick;
 import com.lx.rich.model.Bi;
 import com.lx.rich.model.CandleDetail;
 import com.lx.rich.model.ZhongShu;
+import com.lx.rich.model.Zoushi;
 import com.lx.rich.service.ChanService;
 import com.lx.rich.service.HistoryDataService;
 
@@ -34,5 +35,10 @@ public abstract class AbstractTradeStrategy {
 
 
 	}
+
+	protected Zoushi getLastZoushi(ZhongShu zhongShu) {
+		return zhongShu.getZoushiList().get(zhongShu.getZoushiList().size() - 1);
+	}
+
 
 }
