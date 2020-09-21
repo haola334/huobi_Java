@@ -12,4 +12,12 @@ public enum  TradeType {
         this.code = code;
         this.text = text;
     }
+
+    public int getCode() {
+        return code;
+    }
+
+    public String getText() {
+        return text;
+    }
 }

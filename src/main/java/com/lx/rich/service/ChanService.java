@@ -1,6 +1,7 @@
 package com.lx.rich.service;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -317,14 +318,21 @@ public class ChanService {
 			currFirstZoushi = getZhongshuFirstZoushi(currLastZhongshu);
 		}
 
+		System.out.println("中枢to: " + new Date(targetLastZoushi.getTo().getTimestamp()) + ", zd: " + targetLastZhongshu.getZd() + ", zg: " + targetLastZhongshu.getZg());
+		System.out.println("中枢后的一笔to: " + new Date(currFirstZoushi.getTo().getTimestamp()) + ", 最后一笔的收盘价为：" + currFirstZoushi.getTo().getClose());
+
+
 		Candlestick recentCandlestick = historyDataService.getRecentCandlestick();
-		if (currFirstZoushi.getFrom().getTimestamp() > targetLastZoushi.getTo().getTimestamp()) {
+		if (currFirstZoushi.getFrom().getTimestamp() >= targetLastZoushi.getTo().getTimestamp()) {
 
 			BigDecimal targetMacdSize = macdService.totalMacd(targetFirstZoushi.getFrom(), targetFirstZoushi.getTo());
 			double targetMacdSizeValue = Math.abs(targetMacdSize.doubleValue());
 			BigDecimal currMacdSize = macdService.totalMacd(targetLastZoushi.getTo(), recentCandlestick);
 			double currMacdSizeValue = Math.abs(currMacdSize.doubleValue());
 
+			System.out.println("macd target: " + targetMacdSizeValue);
+			System.out.println("macd curr: " + currMacdSizeValue);
+			System.out.println();
 			if (currMacdSizeValue / targetMacdSizeValue <= macdPercent) {
 				result.add(level);
 			}

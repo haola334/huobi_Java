@@ -72,7 +72,7 @@ public class MacdService {
 				continue;
 			}
 
-			result.add(macd.getMacd());
+			result = result.add(macd.getMacd());
 			currTime+=ONE_MINUTE;
 		}
 

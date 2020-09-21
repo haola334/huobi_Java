@@ -146,8 +146,8 @@ public class HistoryDataService {
     public List<Candlestick> loadDataFromFile() throws IOException {
         File directory = new File("");//参数为空
         String courseFile = directory.getCanonicalPath();//标准的路径 ;
-        File file = new File(courseFile + "\\src\\main\\resources\\data.txt");
-//        File file = new File("/Users/liangxiao/IdeaProjects/huobi_Java/src/main/resources/data.txt");
+//        File file = new File(courseFile + "\\src\\main\\resources\\data.txt");
+        File file = new File("/Users/liangxiao/IdeaProjects/huobi_Java/src/main/resources/data.txt");
         List<String> lines = Files.readLines(file, Charset.defaultCharset());
 
         String line = lines.get(0);

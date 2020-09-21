@@ -54,7 +54,8 @@ public class DefaultTradeStrategy extends AbstractTradeStrategy implements Trade
 		Zoushi zoushi = getLastZoushi(lastZhongshu);
 
 		BigDecimal currentPrice = historyDataService.getCurrentPrice();
-
+		zd = lastZhongshu.getZd();
+		zg = lastZhongshu.getZg();
 		if (zoushi.isUp()) {
 			if (currentPrice.compareTo(lastZhongshu.getZg()) <= 0 || calPercent(currentPrice, zg) < minPercent) {
 				return false;
@@ -69,8 +70,7 @@ public class DefaultTradeStrategy extends AbstractTradeStrategy implements Trade
 			TradeContext.setTradeType(TradeType.DUO);
 		}
 
-		zd = lastZhongshu.getZd();
-		zg = lastZhongshu.getZg();
+
 
 		return true;
 	}
